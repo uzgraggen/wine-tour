@@ -590,24 +590,29 @@ wines.forEach(w => { state[w.id] = { qty: 0, rating: 0, notes: '' }; });
 // Producers
 const producers = [...new Set(wines.map(w => w.producer))];
 
-function getEffectivePrice(wine, qty) {
+function getEffectivePrice(wine) {
   if (!wine.degu) return wine.sale; // AKTUELL-Preis, kein Rabatt
-  // Sale-Preis = Listenpreis mit 6% Degurabatt (bereits eingerechnet)
-  // 4% Liquid Rabatt = nur Punkte, kein Preisabzug
-  const producerWines = wines.filter(w => w.producer === wine.producer && w.degu);
-  const producerQty = producerWines.reduce((s, w) => s + state[w.id].qty, 0);
-  const qtyDisc = QTY_BREAKS.find(b => producerQty >= b.min)?.rate || 0;
+  // Mengenrabatt sortenrein = pro Artikelnummer
+  const qty = state[wine.id].qty;
+  const qtyDisc = QTY_BREAKS.find(b => qty >= b.min)?.rate || 0;
   return wine.sale * (1 - qtyDisc);
 }
 
+function getWineQtyDiscount(wine) {
+  const qty = state[wine.id].qty;
+  return QTY_BREAKS.find(b => qty >= b.min)?.rate || 0;
+}
+
+// Legacy: für Badge-Anzeige pro Produzent (nur informativer Natur)
 function getProducerQty(producer) {
   return wines.filter(w => w.producer === producer && w.degu)
     .reduce((s, w) => s + state[w.id].qty, 0);
 }
 
 function getProducerDiscount(producer) {
-  const qty = getProducerQty(producer);
-  return QTY_BREAKS.find(b => qty >= b.min)?.rate || 0;
+  // Gibt den höchsten Einzelartikel-Rabatt innerhalb des Produzenten zurück
+  const prodWines = wines.filter(w => w.producer === producer && w.degu);
+  return Math.max(0, ...prodWines.map(w => getWineQtyDiscount(w)));
 }
 
 function formatCHF(n) { return 'CHF ' + n.toFixed(2); }
@@ -620,7 +625,7 @@ function render() {
   wines.forEach(w => {
     const s = state[w.id];
     if (s.qty > 0) {
-      const effPrice = getEffectivePrice(w, s.qty);
+      const effPrice = getEffectivePrice(w);
       const lineTotal = effPrice * s.qty;
       const origLineTotal = w.orig * s.qty;
       grandTotal += lineTotal;
@@ -636,7 +641,7 @@ function render() {
   // Update line totals and producer badges
   wines.forEach(w => {
     const s = state[w.id];
-    const effPrice = getEffectivePrice(w, s.qty);
+    const effPrice = getEffectivePrice(w);
     const lineEl = document.getElementById('line-' + w.id);
     const qtyEl = document.getElementById('qty-' + w.id);
     if (lineEl) {
@@ -678,7 +683,7 @@ function renderSummary(grandTotal, totalBottles, totalSaved) {
   let itemsHtml = '';
   ordered.forEach(w => {
     const s = state[w.id];
-    const effPrice = getEffectivePrice(w, s.qty);
+    const effPrice = getEffectivePrice(w);
     itemsHtml += `<div class="summary-item">
       <span class="sname">${w.name}</span>
       <span class="sqty">×${s.qty}</span>
@@ -710,27 +715,26 @@ function renderSummary(grandTotal, totalBottles, totalSaved) {
 function renderOptimizer() {
   const tips = [];
 
-  producers.forEach(prod => {
-    const qty = getProducerQty(prod);
+  wines.forEach(wine => {
+    if (!wine.degu) return;
+    const qty = state[wine.id].qty;
     if (qty === 0) return;
-    const disc = getProducerDiscount(prod);
+    const disc = getWineQtyDiscount(wine);
     const nextBreak = QTY_BREAKS.slice().reverse().find(b => b.min > qty);
     if (nextBreak && nextBreak.min - qty <= 3) {
       const needed = nextBreak.min - qty;
       const gain = nextBreak.rate;
-      const prodWines = wines.filter(w => w.producer === prod && w.degu);
-      const avgPrice = prodWines.reduce((s,w) => s + w.sale, 0) / prodWines.length;
-      const extraSaving = (avgPrice * gain * nextBreak.min).toFixed(2);
-      tips.push({type:'near', text:`<strong>${prod}</strong>: Noch <strong>${needed} Flasche${needed>1?'n':''}</strong> für ${(gain*100).toFixed(0)}% Mengenrabatt → ca. CHF ${extraSaving} Ersparnis auf ${nextBreak.min} Fl.`});
+      const saving = (wine.sale * gain * nextBreak.min).toFixed(2);
+      tips.push({type:'near', text:`<strong>${wine.name}</strong>: Noch <strong>${needed} Fl.</strong> für ${(gain*100).toFixed(0)}% Mengenrabatt → CHF ${saving} Ersparnis auf ${nextBreak.min} Fl.`});
     }
     if (disc > 0) {
-      tips.push({type:'good', text:`<strong>${prod}</strong>: ${(disc*100).toFixed(0)}% Mengenrabatt aktiv auf ${qty} Fl.`});
+      tips.push({type:'good', text:`<strong>${wine.name}</strong>: ${(disc*100).toFixed(0)}% Mengenrabatt aktiv (${qty} Fl. sortenrein)`});
     }
   });
 
   // Free delivery tip
   let gt = 0;
-  wines.forEach(w => { if(state[w.id].qty>0) gt += getEffectivePrice(w,state[w.id].qty)*state[w.id].qty; });
+  wines.forEach(w => { if(state[w.id].qty>0) gt += getEffectivePrice(w)*state[w.id].qty; });
   if (gt > 0 && gt < 70) {
     tips.push({type:'near', text:`<strong>Gratis-Lieferung</strong>: noch CHF ${(70-gt).toFixed(2)} bis CHF 70 → spart CHF 8.90 Mindermengenzuschlag`});
   }

@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gomes Wine Tour — Degustation</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f5f0e8;
+    --parchment: #ede5d0;
+    --wine: #6b1a2a;
+    --wine-dark: #4a0f1c;
+    --wine-light: #9b3a4a;
+    --gold: #b8960c;
+    --gold-light: #d4ae3a;
+    --ink: #1a1410;
+    --muted: #7a6a5a;
+    --border: #c8b89a;
+    --white-wine: #f8e87c;
+    --rose-wine: #e8a0b0;
+    --red-wine: #6b1a2a;
+    --green: #2d6a4f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--wine-dark);
+    padding: 24px 20px 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      45deg, transparent, transparent 20px,
+      rgba(255,255,255,0.02) 20px, rgba(255,255,255,0.02) 40px
+    );
+  }
+  header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--cream);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    position: relative;
+  }
+  header .subtitle {
+    color: var(--gold-light);
+    font-size: 10px;
+    letter-spacing: 3px;
+    margin-top: 4px;
+    position: relative;
+    font-weight: 300;
+  }
+  header .dates {
+    color: rgba(245,240,232,0.6);
+    font-size: 10px;
+    margin-top: 8px;
+    position: relative;
+  }
+
+  /* STICKY TOTAL BAR */
+  #total-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--wine);
+    padding: 10px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 12px rgba(107,26,42,0.4);
+  }
+  #total-bar .label {
+    color: rgba(245,240,232,0.7);
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  #total-bar .amount {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--gold-light);
+  }
+  #total-bar .bottles-count {
+    font-size: 10px;
+    color: rgba(245,240,232,0.7);
+    text-align: right;
+  }
+  #total-bar .savings {
+    font-size: 9px;
+    color: #90ee90;
+    margin-top: 1px;
+  }
+
+  /* DISCOUNT INFO */
+  #discount-info {
+    background: var(--parchment);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  #discount-info strong { color: var(--wine); }
+  .discount-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 6px;
+  }
+  .pill {
+    background: var(--wine);
+    color: var(--cream);
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 9px;
+    letter-spacing: 1px;
+  }
+  .pill.active { background: var(--green); }
+  .pill.near { background: var(--gold); color: var(--ink); }
+
+  /* SECTION */
+  .producer-section {
+    margin: 0;
+    border-bottom: 2px solid var(--border);
+  }
+  .producer-header {
+    background: var(--parchment);
+    padding: 10px 16px 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .producer-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--wine-dark);
+    letter-spacing: 1px;
+  }
+  .producer-meta {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+  .producer-discount-badge {
+    margin-left: auto;
+    font-size: 9px;
+    color: var(--muted);
+  }
+  .producer-discount-badge .active { color: var(--green); font-weight: 500; }
+  .producer-discount-badge .near-next { color: var(--gold); }
+
+  /* WINE CARD */
+  .wine-card {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(200,184,154,0.4);
+    transition: background 0.15s;
+  }
+  .wine-card:hover { background: rgba(237,229,208,0.5); }
+
+  .wine-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .wine-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-top: 3px;
+    flex-shrink: 0;
+  }
+  .dot-white { background: var(--white-wine); border: 1px solid var(--gold); }
+  .dot-rose { background: var(--rose-wine); border: 1px solid #c0607a; }
+  .dot-red { background: var(--red-wine); border: 1px solid #4a0f1c; }
+  .dot-oil { background: #8bc34a; border: 1px solid #558b2f; }
+  .dot-fortified { background: #8b4513; border: 1px solid #5d2e0a; }
+
+  .wine-name-block { flex: 1; }
+  .wine-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+  .wine-detail {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+  }
+  .wine-price-block {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .price-sale {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--wine);
+  }
+  .price-original {
+    font-size: 9px;
+    color: var(--muted);
+    text-decoration: line-through;
+  }
+  .price-aktuell {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--muted);
+  }
+
+  /* RATING */
+  .wine-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .rating-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .rating-label {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    min-width: 36px;
+  }
+  .stars {
+    display: flex;
+    gap: 2px;
+  }
+  .star {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    color: var(--border);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.1s, transform 0.1s;
+    user-select: none;
+  }
+  .star:hover { transform: scale(1.2); }
+  .star.active { color: var(--gold); }
+
+  .rating-display {
+    font-size: 11px;
+    color: var(--wine);
+    font-weight: 500;
+    min-width: 24px;
+  }
+
+  /* ORDER */
+  .order-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+  }
+  .order-label {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 1px;
+  }
+  .qty-btn {
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--border);
+    background: var(--cream);
+    color: var(--wine);
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s;
+    font-family: 'DM Mono', monospace;
+  }
+  .qty-btn:hover { background: var(--wine); color: var(--cream); }
+  .qty-display {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--ink);
+    min-width: 24px;
+    text-align: center;
+  }
+  .line-total {
+    font-size: 10px;
+    color: var(--wine-light);
+    min-width: 50px;
+    text-align: right;
+    font-weight: 500;
+  }
+
+  /* NOTES */
+  .notes-area {
+    width: 100%;
+    margin-top: 8px;
+    background: rgba(237,229,208,0.6);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink);
+    resize: none;
+    min-height: 40px;
+    outline: none;
+    transition: border-color 0.2s;
+    overflow: hidden;
+  }
+  .notes-area:focus { border-color: var(--wine); }
+  .notes-area::placeholder { color: var(--border); }
+
+  /* SUMMARY SECTION */
+  #summary {
+    background: var(--wine-dark);
+    padding: 20px 16px;
+    color: var(--cream);
+  }
+  #summary h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 300;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(245,240,232,0.2);
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+  }
+  .summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 11px;
+    border-bottom: 1px solid rgba(245,240,232,0.1);
+  }
+  .summary-item .sname {
+    color: rgba(245,240,232,0.8);
+    flex: 1;
+  }
+  .summary-item .sqty { color: rgba(245,240,232,0.5); min-width: 30px; text-align: center; }
+  .summary-item .sprice { color: var(--gold-light); min-width: 70px; text-align: right; }
+
+  .summary-total-block {
+    margin-top: 16px;
+    border-top: 1px solid rgba(245,240,232,0.3);
+    padding-top: 12px;
+  }
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    padding: 2px 0;
+    color: rgba(245,240,232,0.7);
+  }
+  .summary-row.highlight {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--gold-light);
+    padding-top: 8px;
+  }
+  .summary-row.savings-row { color: #90ee90; }
+
+  /* DISCOUNT OPTIMIZER */
+  #optimizer {
+    background: var(--parchment);
+    padding: 16px;
+    border-top: 2px solid var(--border);
+  }
+  #optimizer h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    color: var(--wine-dark);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+  }
+  .opt-tip {
+    background: white;
+    border-left: 3px solid var(--gold);
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    font-size: 10px;
+    color: var(--ink);
+    border-radius: 0 4px 4px 0;
+  }
+  .opt-tip.good { border-left-color: var(--green); }
+  .opt-empty { font-size: 11px; color: var(--muted); }
+
+  /* TABS */
+  .tab-bar {
+    display: flex;
+    background: var(--parchment);
+    border-bottom: 2px solid var(--border);
+    position: sticky;
+    top: 57px;
+    z-index: 90;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    padding: 8px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: var(--muted);
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.15s;
+  }
+  .tab-btn:hover { color: var(--wine); }
+  .tab-btn.active { color: var(--wine); border-bottom-color: var(--wine); }
+
+  /* BIO badge */
+  .bio-tag {
+    display: inline-block;
+    background: var(--green);
+    color: white;
+    font-size: 7px;
+    padding: 1px 4px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+
+  .no-degu-tag {
+    display: inline-block;
+    background: var(--muted);
+    color: white;
+    font-size: 7px;
+    padding: 1px 4px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+    margin-left: 4px;
+    vertical-align: middle;
+  }
+
+  /* SECTION HIDDEN */
+  .producer-section.hidden { display: none; }
+
+  footer {
+    text-align: center;
+    padding: 16px;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Gomes Wine Tour</h1>
+  <div class="subtitle">Wines of Portugal — Ullrich LiquidClub</div>
+  <div class="dates">Zürich · 16. April 2026</div>
+</header>
+
+<div id="total-bar">
+  <div>
+    <div class="label">Bestelltotal</div>
+    <div class="amount" id="grand-total">CHF 0.00</div>
+  </div>
+  <div style="text-align:right">
+    <div class="bottles-count" id="bottle-count">0 Flaschen</div>
+    <div class="savings" id="savings-display"></div>
+  </div>
+</div>
+
+<div id="discount-info">
+  <strong>Degustationsrabatt:</strong> 6% auf alle Degustationsartikel + 4% Liquid Rabatt<br>
+  <strong>Mengenrabatt (sortenrein):</strong> ab 6 Fl. 5% · ab 12 Fl. 7% · ab 18 Fl. 10%
+  <div class="discount-pills" id="producer-pills"></div>
+</div>
+
+<div class="tab-bar" id="tab-bar">
+  <button class="tab-btn active" onclick="showAll()">Alle</button>
+</div>
+
+<div id="wine-list"></div>
+<div id="optimizer">
+  <h3>💡 Rabatt-Optimierer</h3>
+  <div id="optimizer-content"><p class="opt-empty">Bestelle Weine, um Optimierungstipps zu erhalten.</p></div>
+</div>
+<div id="summary" style="display:none">
+  <h2>Bestellübersicht</h2>
+  <div id="summary-items"></div>
+  <div class="summary-total-block" id="summary-totals"></div>
+</div>
+
+<footer>Paul Ullrich AG · Aliothstrasse 40 · CH-4142 Münchenstein · info@ullrich.ch</footer>
+
+<script>
+const DEGU_DISCOUNT = 0.06; // Kein LiquidClub → nur 6% Degurabatt
+// Mengenrabatt pro sortenrein (pro Produzent)
+const QTY_BREAKS = [{min:18,rate:0.10},{min:12,rate:0.07},{min:6,rate:0.05}];
+
+const wines = [
+  // ANSELMO MENDES
+  {id:'104101',producer:'Anselmo Mendes',name:'Espumante Alvarelhão Private Rosé Brut 2022',region:'Vinho V. DOC',alc:12,cl:75,type:'rose',sale:25.50,orig:30.50,degu:true,bio:false},
+  {id:'106791',producer:'Anselmo Mendes',name:'Alvarinho Contacto 2025',region:'Vinho Verde DOC',alc:12.5,cl:75,type:'white',sale:16.00,orig:19.00,degu:true,bio:false},
+  {id:'105693',producer:'Anselmo Mendes',name:'Alvarinho Muros de Melgaço 2024',region:'Vinho Verde DOC',alc:12.5,cl:75,type:'white',sale:24.00,orig:28.50,degu:true,bio:false},
+  {id:'106277',producer:'Anselmo Mendes',name:'Alvarinho Parcela Única 2022',region:'Vinho Verde DOC',alc:12.5,cl:75,type:'white',sale:40.50,orig:48.00,degu:true,bio:false},
+  // MALHADINHA
+  {id:'103914',producer:'Malhadinha',name:'Roupeiro Da Malhadinha 2023',region:'Alentejano VR',alc:12,cl:75,type:'white',sale:21.00,orig:24.80,degu:true,bio:true},
+  {id:'55358',producer:'Malhadinha',name:'Rosé 2021',region:'Alentejano VR',alc:12.5,cl:75,type:'rose',sale:35.70,orig:42.00,degu:true,bio:true},
+  {id:'103946',producer:'Malhadinha',name:'Monte Da Peceguina Tinto 2023',region:'Alentejano DOC',alc:14,cl:75,type:'red',sale:16.50,orig:19.50,degu:true,bio:false},
+  {id:'104982',producer:'Malhadinha',name:'Malhadinha Tinto 2023',region:'Alentejano VR',alc:14.5,cl:75,type:'red',sale:48.00,orig:57.00,degu:true,bio:true},
+  // MOUCHÃO
+  {id:'106169',producer:'Mouchão',name:'Ponte Branco 2024',region:'Alentejo DOC',alc:13,cl:75,type:'white',sale:21.00,orig:25.00,degu:true,bio:false},
+  {id:'106706',producer:'Mouchão',name:'Dom Rafael Tinto 2023',region:'Alentejo DOC',alc:14,cl:75,type:'red',sale:12.50,orig:14.80,degu:true,bio:false},
+  {id:'105423',producer:'Mouchão',name:'Ponte Tinto 2021',region:'Alentejo DOC',alc:14,cl:75,type:'red',sale:21.00,orig:25.00,degu:true,bio:false},
+  {id:'106704',producer:'Mouchão',name:'Mouchão Tinto 2018',region:'Alentejo DOC',alc:14.5,cl:75,type:'red',sale:44.00,orig:52.00,degu:true,bio:false},
+  // ODE WINERY
+  {id:'103379',producer:'ODE Winery',name:'Arinto 2023',region:'Tejo DOC',alc:12.5,cl:75,type:'white',sale:23.00,orig:27.50,degu:true,bio:false},
+  {id:'103380',producer:'ODE Winery',name:'Quarteto Red 2022',region:'Tejo DOC',alc:13.5,cl:75,type:'red',sale:19.00,orig:22.50,degu:true,bio:false},
+  {id:'103381',producer:'ODE Winery',name:'Touriga Nacional 2023',region:'Tejo DOC',alc:13.5,cl:75,type:'red',sale:20.00,orig:23.80,degu:true,bio:false},
+  {id:'103382',producer:'ODE Winery',name:'Lagares Tinto 2022',region:'Tejo DOC',alc:12,cl:75,type:'red',sale:27.50,orig:32.50,degu:true,bio:false},
+  // QUINTA DA PELLADA
+  {id:'104749',producer:'Quinta da Pellada',name:'Primus Branco 2023',region:'Dão DOC',alc:13,cl:75,type:'white',sale:36.90,orig:43.50,degu:true,bio:false},
+  {id:'43835',producer:'Quinta da Pellada',name:'Quinta de Saes Reserva Tinto 2015',region:'Dão DOC',alc:13,cl:75,type:'red',sale:28.90,orig:34.00,degu:true,bio:true},
+  {id:'45323',producer:'Quinta da Pellada',name:'Tinto 2016',region:'Dão DOC',alc:13,cl:75,type:'red',sale:50.00,orig:59.00,degu:true,bio:false},
+  // QUINTA DO MONDEGO
+  {id:'102441',producer:'Quinta do Mondego',name:'Munda Encruzado Branco 2021',region:'Dão DOC',alc:13,cl:75,type:'white',sale:30.60,orig:36.00,degu:true,bio:false},
+  {id:'101914',producer:'Quinta do Mondego',name:'Family Blend Rosé 2023',region:'Dão DOC',alc:13,cl:75,type:'rose',sale:14.00,orig:16.50,degu:true,bio:false},
+  {id:'101913',producer:'Quinta do Mondego',name:'Jaen Tinto 2022',region:'Dão DOC',alc:13,cl:75,type:'red',sale:14.00,orig:16.50,degu:true,bio:false},
+  {id:'106209',producer:'Quinta do Mondego',name:'Munda Touriga Nacional 2017',region:'Dão DOC',alc:14,cl:75,type:'red',sale:32.50,orig:38.50,degu:true,bio:false},
+  // TAPADA DE COELHEIROS
+  {id:'55943',producer:'Tapada de Coelheiros',name:'Coelheiros Branco 2022',region:'Alentejo DOC',alc:13,cl:75,type:'white',sale:13.00,orig:15.80,degu:true,bio:false},
+  {id:'102927',producer:'Tapada de Coelheiros',name:'Tapada Branco 2022',region:'Alentejo DOC',alc:13,cl:75,type:'white',sale:33.00,orig:39.00,degu:true,bio:false},
+  {id:'102925',producer:'Tapada de Coelheiros',name:'Coelheiros Tinto 2022',region:'Alentejo DOC',alc:13.5,cl:75,type:'red',sale:13.00,orig:15.80,degu:true,bio:false},
+  {id:'102926',producer:'Tapada de Coelheiros',name:'Tapada Tinto 2019',region:'Alentejo DOC',alc:14,cl:75,type:'red',sale:33.00,orig:39.00,degu:true,bio:false},
+  // BLANDY'S MADEIRA (kein Degustationsrabatt)
+  {id:'105637',producer:"Blandy's Madeira",name:'Bual 10 Years Madeira',region:'Madeira',alc:19,cl:75,type:'fortified',sale:41.50,orig:41.50,degu:false,bio:false},
+  {id:'105638',producer:"Blandy's Madeira",name:'Malmsey 10 Years Madeira',region:'Madeira',alc:19,cl:75,type:'fortified',sale:41.50,orig:41.50,degu:false,bio:false},
+  {id:'105635',producer:"Blandy's Madeira",name:'Sercial 10 Years Madeira',region:'Madeira',alc:19,cl:75,type:'fortified',sale:41.50,orig:41.50,degu:false,bio:false},
+  {id:'105636',producer:"Blandy's Madeira",name:'Verdelho 10 Years Madeira',region:'Madeira',alc:19,cl:75,type:'fortified',sale:41.50,orig:41.50,degu:false,bio:false},
+  // DOW'S PORT (kein Degustationsrabatt)
+  {id:'104767',producer:"Dow's Portwein",name:'Late Bottled Vintage 2020 Port',region:'Port',alc:20,cl:75,type:'fortified',sale:21.00,orig:21.00,degu:false,bio:false},
+  {id:'37308',producer:"Dow's Portwein",name:'Tawny 20 Years Port',region:'Port',alc:20,cl:75,type:'fortified',sale:52.50,orig:52.50,degu:false,bio:false},
+  {id:'37309',producer:"Dow's Portwein",name:'Tawny 30 Years Port',region:'Port',alc:20,cl:75,type:'fortified',sale:102.00,orig:102.00,degu:false,bio:false},
+  {id:'105749',producer:"Dow's Portwein",name:'Quinta Senhora da Ribeira 2023 Vintage Port',region:'Port',alc:20,cl:75,type:'fortified',sale:72.00,orig:72.00,degu:false,bio:false},
+  // ESPORÃO OLIVENÖL
+  {id:'38745',producer:'Esporão Olivenöl',name:'Olivenöl Virgem Extra',region:'50cl',alc:0,cl:50,type:'oil',sale:14.20,orig:16.80,degu:true,bio:false},
+  {id:'56094',producer:'Esporão Olivenöl',name:'Olivenöl Virgem Extra "Galega"',region:'50cl',alc:0,cl:50,type:'oil',sale:16.50,orig:19.20,degu:true,bio:true},
+  {id:'36468',producer:'Esporão Olivenöl',name:'Olivenöl Virgem Extra "Olival dos Ariffes"',region:'50cl',alc:0,cl:50,type:'oil',sale:17.50,orig:20.50,degu:true,bio:true},
+  {id:'36467',producer:'Esporão Olivenöl',name:'Olivenöl Azeite Virgem Extra "Selecção"',region:'50cl',alc:0,cl:50,type:'oil',sale:17.50,orig:20.50,degu:true,bio:true},
+];
+
+// State
+const state = {};
+wines.forEach(w => { state[w.id] = { qty: 0, rating: 0, notes: '' }; });
+
+// Producers
+const producers = [...new Set(wines.map(w => w.producer))];
+
+function getEffectivePrice(wine, qty) {
+  if (!wine.degu) return wine.sale; // AKTUELL-Preis, kein Rabatt
+  // Sale-Preis = Listenpreis mit 6% Degurabatt (bereits eingerechnet)
+  // 4% Liquid Rabatt = nur Punkte, kein Preisabzug
+  const producerWines = wines.filter(w => w.producer === wine.producer && w.degu);
+  const producerQty = producerWines.reduce((s, w) => s + state[w.id].qty, 0);
+  const qtyDisc = QTY_BREAKS.find(b => producerQty >= b.min)?.rate || 0;
+  return wine.sale * (1 - qtyDisc);
+}
+
+function getProducerQty(producer) {
+  return wines.filter(w => w.producer === producer && w.degu)
+    .reduce((s, w) => s + state[w.id].qty, 0);
+}
+
+function getProducerDiscount(producer) {
+  const qty = getProducerQty(producer);
+  return QTY_BREAKS.find(b => qty >= b.min)?.rate || 0;
+}
+
+function formatCHF(n) { return 'CHF ' + n.toFixed(2); }
+
+function render() {
+  let grandTotal = 0;
+  let totalBottles = 0;
+  let totalSaved = 0;
+
+  wines.forEach(w => {
+    const s = state[w.id];
+    if (s.qty > 0) {
+      const effPrice = getEffectivePrice(w, s.qty);
+      const lineTotal = effPrice * s.qty;
+      const origLineTotal = w.orig * s.qty;
+      grandTotal += lineTotal;
+      totalBottles += s.qty;
+      totalSaved += origLineTotal - lineTotal;
+    }
+  });
+
+  document.getElementById('grand-total').textContent = formatCHF(grandTotal);
+  document.getElementById('bottle-count').textContent = totalBottles + (totalBottles===1?' Flasche':' Flaschen');
+  document.getElementById('savings-display').textContent = totalSaved > 0 ? `Sie sparen CHF ${totalSaved.toFixed(2)}` : '';
+
+  // Update line totals and producer badges
+  wines.forEach(w => {
+    const s = state[w.id];
+    const effPrice = getEffectivePrice(w, s.qty);
+    const lineEl = document.getElementById('line-' + w.id);
+    const qtyEl = document.getElementById('qty-' + w.id);
+    if (lineEl) {
+      lineEl.textContent = s.qty > 0 ? formatCHF(effPrice * s.qty) : '';
+    }
+    if (qtyEl) qtyEl.textContent = s.qty;
+  });
+
+  // Producer badges
+  producers.forEach(prod => {
+    const qty = getProducerQty(prod);
+    const disc = getProducerDiscount(prod);
+    const el = document.getElementById('badge-' + prod.replace(/[^a-z]/gi,'_'));
+    if (el) {
+      const next = QTY_BREAKS.slice().reverse().find(b => b.min > qty);
+      const needed = next ? next.min - qty : 0;
+      if (disc > 0) {
+        el.innerHTML = `<span class="active">▼ ${(disc*100).toFixed(0)}% Mengenrabatt (${qty} Fl.)</span>`;
+      } else if (qty > 0 && needed > 0) {
+        el.innerHTML = `<span class="near-next">noch ${needed} Fl. → 5%</span>`;
+      } else if (qty > 0) {
+        el.innerHTML = `${qty} Fl. bestellt`;
+      } else {
+        el.innerHTML = '';
+      }
+    }
+  });
+
+  renderSummary(grandTotal, totalBottles, totalSaved);
+  renderOptimizer();
+}
+
+function renderSummary(grandTotal, totalBottles, totalSaved) {
+  const ordered = wines.filter(w => state[w.id].qty > 0);
+  const summaryEl = document.getElementById('summary');
+  if (ordered.length === 0) { summaryEl.style.display = 'none'; return; }
+  summaryEl.style.display = 'block';
+
+  let itemsHtml = '';
+  ordered.forEach(w => {
+    const s = state[w.id];
+    const effPrice = getEffectivePrice(w, s.qty);
+    itemsHtml += `<div class="summary-item">
+      <span class="sname">${w.name}</span>
+      <span class="sqty">×${s.qty}</span>
+      <span class="sprice">${formatCHF(effPrice * s.qty)}</span>
+    </div>`;
+  });
+  document.getElementById('summary-items').innerHTML = itemsHtml;
+
+  // Check free delivery
+  const freeDelivery = grandTotal >= 70;
+  const minCharge = grandTotal > 0 && grandTotal < 70 ? 8.90 : 0;
+
+  const total6 = grandTotal * 0.94;
+  const minCharge6 = total6 > 0 && total6 < 70 ? 8.90 : 0;
+  const freeDelivery6 = total6 >= 70;
+
+  let totHtml = `
+    <div class="summary-row"><span>Zwischentotal (Listenpreise)</span><span>${formatCHF(grandTotal)}</span></div>
+    <div class="summary-row savings-row"><span>Gesamtersparnis vs. Normalpreis</span><span>−CHF ${totalSaved.toFixed(2)}</span></div>
+    <div class="summary-row"><span>Lieferung</span><span>${freeDelivery ? 'Gratis ✓' : 'CHF 8.90 (noch CHF '+(70-grandTotal).toFixed(2)+' bis gratis)'}</span></div>
+    <div class="summary-row highlight"><span>TOTAL (Listenpreise)</span><span>${formatCHF(grandTotal + minCharge)}</span></div>
+    <div class="summary-row" style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(245,240,232,0.2);color:rgba(245,240,232,0.6);font-size:10px"><span>− 6% Degustationsrabatt</span><span>−CHF ${(grandTotal * 0.06).toFixed(2)}</span></div>
+    <div class="summary-row"><span>Lieferung</span><span>${freeDelivery6 ? 'Gratis ✓' : 'CHF 8.90 (noch CHF '+(70-total6).toFixed(2)+' bis gratis)'}</span></div>
+    <div class="summary-row highlight" style="color:#ffe080"><span>TOTAL inkl. 6% Rabatt</span><span>${formatCHF(total6 + minCharge6)}</span></div>
+  `;
+  document.getElementById('summary-totals').innerHTML = totHtml;
+}
+
+function renderOptimizer() {
+  const tips = [];
+
+  producers.forEach(prod => {
+    const qty = getProducerQty(prod);
+    if (qty === 0) return;
+    const disc = getProducerDiscount(prod);
+    const nextBreak = QTY_BREAKS.slice().reverse().find(b => b.min > qty);
+    if (nextBreak && nextBreak.min - qty <= 3) {
+      const needed = nextBreak.min - qty;
+      const gain = nextBreak.rate;
+      const prodWines = wines.filter(w => w.producer === prod && w.degu);
+      const avgPrice = prodWines.reduce((s,w) => s + w.sale, 0) / prodWines.length;
+      const extraSaving = (avgPrice * gain * nextBreak.min).toFixed(2);
+      tips.push({type:'near', text:`<strong>${prod}</strong>: Noch <strong>${needed} Flasche${needed>1?'n':''}</strong> für ${(gain*100).toFixed(0)}% Mengenrabatt → ca. CHF ${extraSaving} Ersparnis auf ${nextBreak.min} Fl.`});
+    }
+    if (disc > 0) {
+      tips.push({type:'good', text:`<strong>${prod}</strong>: ${(disc*100).toFixed(0)}% Mengenrabatt aktiv auf ${qty} Fl.`});
+    }
+  });
+
+  // Free delivery tip
+  let gt = 0;
+  wines.forEach(w => { if(state[w.id].qty>0) gt += getEffectivePrice(w,state[w.id].qty)*state[w.id].qty; });
+  if (gt > 0 && gt < 70) {
+    tips.push({type:'near', text:`<strong>Gratis-Lieferung</strong>: noch CHF ${(70-gt).toFixed(2)} bis CHF 70 → spart CHF 8.90 Mindermengenzuschlag`});
+  }
+
+  const el = document.getElementById('optimizer-content');
+  if (tips.length === 0) {
+    el.innerHTML = '<p class="opt-empty">Bestelle Weine, um Optimierungstipps zu erhalten.</p>';
+  } else {
+    el.innerHTML = tips.map(t => `<div class="opt-tip ${t.type}">${t.text}</div>`).join('');
+  }
+}
+
+function buildUI() {
+  // Tab bar
+  const tabBar = document.getElementById('tab-bar');
+  producers.forEach(prod => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn';
+    btn.textContent = prod.split(' ')[0];
+    btn.onclick = () => filterProducer(prod, btn);
+    tabBar.appendChild(btn);
+  });
+
+  const list = document.getElementById('wine-list');
+
+  producers.forEach(prod => {
+    const prodWines = wines.filter(w => w.producer === prod);
+    const section = document.createElement('div');
+    section.className = 'producer-section';
+    section.id = 'sec-' + prod.replace(/[^a-z]/gi,'_');
+
+    const badgeId = 'badge-' + prod.replace(/[^a-z]/gi,'_');
+    const hasDeguDisc = prodWines.some(w => w.degu);
+
+    section.innerHTML = `
+      <div class="producer-header">
+        <div class="producer-name">${prod}</div>
+        ${hasDeguDisc ? '' : '<span class="no-degu-tag">AKTUELL</span>'}
+        <div class="producer-discount-badge" id="${badgeId}"></div>
+      </div>
+    `;
+
+    prodWines.forEach(wine => {
+      const card = document.createElement('div');
+      card.className = 'wine-card';
+
+      const dotClass = wine.type === 'white' ? 'dot-white' :
+                       wine.type === 'rose' ? 'dot-rose' :
+                       wine.type === 'oil' ? 'dot-oil' :
+                       wine.type === 'fortified' ? 'dot-fortified' : 'dot-red';
+
+      const priceHtml = wine.degu
+        ? `<div class="price-sale">CHF ${wine.sale.toFixed(2)}</div>
+           <div class="price-original">CHF ${wine.orig.toFixed(2)}</div>`
+        : `<div class="price-aktuell">CHF ${wine.sale.toFixed(2)}</div>
+           <div class="price-original" style="opacity:0">–</div>`;
+
+      const typeLabel = wine.type === 'white' ? 'Weiss' :
+                        wine.type === 'rose' ? 'Rosé' :
+                        wine.type === 'oil' ? 'Olivenöl' :
+                        wine.type === 'fortified' ? 'Verstärkt' : 'Rot';
+
+      const regionStr = wine.alc > 0 ? `${wine.region} · ${wine.alc}° · ${wine.cl}cl` : wine.region;
+
+      card.innerHTML = `
+        <div class="wine-top">
+          <div class="wine-dot ${dotClass}" title="${typeLabel}"></div>
+          <div class="wine-name-block">
+            <div class="wine-name">${wine.name}${wine.bio ? '<span class="bio-tag">BIO</span>' : ''}${!wine.degu ? '<span class="no-degu-tag">kein Degu-Rabatt</span>' : ''}</div>
+            <div class="wine-detail">${regionStr} · #${wine.id}</div>
+          </div>
+          <div class="wine-price-block">${priceHtml}</div>
+        </div>
+        <div class="wine-controls">
+          <div class="rating-row">
+            <span class="rating-label">Note</span>
+            <div class="stars" id="stars-${wine.id}">
+              ${[1,2,3,4,5,6,7,8,9,10].map(i =>
+                `<div class="star" data-v="${i}" onclick="setRating('${wine.id}',${i})">●</div>`
+              ).join('')}
+            </div>
+            <span class="rating-display" id="rating-disp-${wine.id}">—</span>
+          </div>
+          <div class="order-row">
+            <span class="order-label">Fl.</span>
+            <button class="qty-btn" onclick="changeQty('${wine.id}',-1)">−</button>
+            <span class="qty-display" id="qty-${wine.id}">0</span>
+            <button class="qty-btn" onclick="changeQty('${wine.id}',1)">+</button>
+            <span class="line-total" id="line-${wine.id}"></span>
+          </div>
+        </div>
+        <textarea class="notes-area" id="notes-${wine.id}" placeholder="Degustationsnotizen…" oninput="setNotes('${wine.id}',this.value);autoResize(this)" rows="1"></textarea>
+      `;
+      section.appendChild(card);
+    });
+
+    list.appendChild(section);
+  });
+}
+
+function setRating(id, val) {
+  state[id].rating = val;
+  const stars = document.querySelectorAll(`#stars-${id} .star`);
+  stars.forEach((s, i) => s.classList.toggle('active', i < val));
+  document.getElementById('rating-disp-' + id).textContent = val + '/10';
+}
+
+function changeQty(id, delta) {
+  state[id].qty = Math.max(0, state[id].qty + delta);
+  render();
+}
+
+function setNotes(id, val) { state[id].notes = val; }
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+function showAll() {
+  document.querySelectorAll('.producer-section').forEach(s => s.classList.remove('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.tab-btn').classList.add('active');
+}
+
+function filterProducer(prod, btn) {
+  document.querySelectorAll('.producer-section').forEach(s => s.classList.add('hidden'));
+  document.getElementById('sec-' + prod.replace(/[^a-z]/gi,'_')).classList.remove('hidden');
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // scroll to section
+  document.getElementById('sec-' + prod.replace(/[^a-z]/gi,'_')).scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+buildUI();
+render();
+</script>
+</body>
+</html>
